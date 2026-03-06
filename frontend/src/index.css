@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #0D0D0D;
+  color: #E8E8E8;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    border-color: #2A2A2A;
+    box-shadow: 0 0 0 rgba(167, 139, 250, 0);
+  }
+
+  50% {
+    border-color: #A78BFA40;
+    box-shadow: 0 0 15px rgba(167, 139, 250, 0.06);
+  }
+}
+
+.animate-page-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-card-in {
+  animation: slideUp 0.5s ease-out both;
+}
+
+.animate-pop-in {
+  animation: popIn 0.4s ease-out both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}

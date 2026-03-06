@@ -1,0 +1,109 @@
+import tensorflow as tf
+import tf_keras
+import numpy as np
+import cv2
+from mtcnn import MTCNN
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+MODEL_PATH = "models/artifact_lens_final.h5"
+model = tf_keras.models.load_model(MODEL_PATH)
+
+
+class FaceProcessor:
+    def __init__(self):
+        self.detector = MTCNN()
+
+    def align_and_crop(self, img, output_size=(224, 224)):
+        if img is None: return None
+        
+        h, w = img.shape[:2]
+        if h < 80 or w < 80:
+            img = cv2.resize(img, (160, 160), interpolation=cv2.INTER_CUBIC)
+            h, w = img.shape[:2]
+
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        try:
+            results = self.detector.detect_faces(img_rgb)
+        except Exception as e:
+            return None
+        
+        if not results:
+            return None
+
+        face = results[0]
+        keypoints = face['keypoints']
+        le, re = keypoints['left_eye'], keypoints['right_eye']
+
+        dY = re[1] - le[1]
+        dX = re[0] - le[0]
+        angle = np.degrees(np.arctan2(dY, dX))
+        center = (float((le[0] + re[0]) / 2), float((le[1] + re[1]) / 2))
+        
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        rotated_img = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_CUBIC)
+
+        x, y, bw, bh = face['box']
+        margin = 30
+        y1, y2 = max(0, y - margin), min(h, y + bh + margin)
+        x1, x2 = max(0, x - margin), min(w, x + bw + margin)
+        
+        crop = rotated_img[y1:y2, x1:x2]
+        
+        if crop.size == 0: return None
+        return cv2.resize(crop, output_size)
+
+
+processor = FaceProcessor()
+
+
+def analyze_image(image_bytes):
+    import time
+    start = time.time()
+
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    face_img = processor.align_and_crop(img)
+
+    if face_img is None:
+        return {"error": "No face detected"}
+
+    face_img = face_img.astype(np.float32) / 255.0
+    face_img = np.expand_dims(face_img, axis=0)
+
+    # Step 1 — Create 4 augmented versions
+    original = face_img
+    flipped = np.fliplr(face_img[0]).reshape(1, 224, 224, 3)
+    brighter = np.clip(face_img * 1.15, 0, 1)
+    darker = np.clip(face_img * 0.85, 0, 1)
+
+    # Step 2 — Predict on all 4
+    p_orig = model.predict(original, verbose=0)[0][0]
+    p_flip = model.predict(flipped, verbose=0)[0][0]
+    p_bright = model.predict(brighter, verbose=0)[0][0]
+    p_dark = model.predict(darker, verbose=0)[0][0]
+
+    print(f"TTA predictions — orig: {p_orig:.4f}, flip: {p_flip:.4f}, bright: {p_bright:.4f}, dark: {p_dark:.4f}")
+
+    # Step 3 — Weighted average
+    avg = (p_orig * 0.4) + (p_flip * 0.2) + (p_bright * 0.2) + (p_dark * 0.2)
+
+    # Step 4 — Calibration (correct Fake bias)
+    calibrated = avg + (0.08 * (1 - avg))
+
+    print(f"Avg: {avg:.4f}, Calibrated: {calibrated:.4f}")
+
+    # Step 5 — Final decision
+    if calibrated > 0.5:
+        label = "Real"
+        confidence = round(float(calibrated), 2)
+    else:
+        label = "Fake"
+        confidence = round(float(1 - calibrated), 2)
+
+    print(f"Analysis completed in {round(time.time() - start, 2)}s")
+
+    return {"label": label, "confidence": confidence}
