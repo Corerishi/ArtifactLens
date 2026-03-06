@@ -107,3 +107,4 @@ def analyze_image(image_bytes):
     print(f"Analysis completed in {round(time.time() - start, 2)}s")
 
     return {"label": label, "confidence": confidence}
+print("Model loaded and ready for inference.")
