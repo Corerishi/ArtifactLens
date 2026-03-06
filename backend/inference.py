@@ -74,37 +74,19 @@ def analyze_image(image_bytes):
     face_img = face_img.astype(np.float32) / 255.0
     face_img = np.expand_dims(face_img, axis=0)
 
-    # Step 1 — Create 4 augmented versions
-    original = face_img
-    flipped = np.fliplr(face_img[0]).reshape(1, 224, 224, 3)
-    brighter = np.clip(face_img * 1.15, 0, 1)
-    darker = np.clip(face_img * 0.85, 0, 1)
+    prediction = model.predict(face_img, verbose=0)[0][0]
 
-    # Step 2 — Predict on all 4
-    p_orig = model.predict(original, verbose=0)[0][0]
-    p_flip = model.predict(flipped, verbose=0)[0][0]
-    p_bright = model.predict(brighter, verbose=0)[0][0]
-    p_dark = model.predict(darker, verbose=0)[0][0]
+    print(f"Raw prediction: {prediction:.4f}")
 
-    print(f"TTA predictions — orig: {p_orig:.4f}, flip: {p_flip:.4f}, bright: {p_bright:.4f}, dark: {p_dark:.4f}")
-
-    # Step 3 — Weighted average
-    avg = (p_orig * 0.4) + (p_flip * 0.2) + (p_bright * 0.2) + (p_dark * 0.2)
-
-    # Step 4 — Calibration (correct Fake bias)
-    calibrated = avg + (0.08 * (1 - avg))
-
-    print(f"Avg: {avg:.4f}, Calibrated: {calibrated:.4f}")
-
-    # Step 5 — Final decision
-    if calibrated > 0.5:
-        label = "Real"
-        confidence = round(float(calibrated), 2)
-    else:
+    if prediction > 0.5:
         label = "Fake"
-        confidence = round(float(1 - calibrated), 2)
+        confidence = round(float(prediction), 2)
+    else:
+        label = "Real"
+        confidence = round(float(1 - prediction), 2)
 
-    print(f"Analysis completed in {round(time.time() - start, 2)}s")
+    print(f"Result: {label} ({confidence}) — completed in {round(time.time() - start, 2)}s")
 
     return {"label": label, "confidence": confidence}
+
 print("Model loaded and ready for inference.")
