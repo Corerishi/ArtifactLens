@@ -1,32 +1,41 @@
-
+import os
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 from inference import analyze_image
 from database import users_collection, history_collection
 
-SECRET_KEY = "artifactlens-secret-key"
+load_dotenv()
+
+SECRET_KEY = os.getenv("JWT_SECRET", "fallback-secret-key")
 ALGORITHM = "HS256"
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
 
+
 class LoginRequest(BaseModel):
     email: str
     password: str
+
 
 app = FastAPI(title="ArtifactLens API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://artifact-lens-six.vercel.app",      
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,9 +47,13 @@ def root():
     return {"status": "ArtifactLens backend is running"}
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "model": "ResNet50-v2", "version": "1.0.0"}
+
+
 @app.post("/api/predict")
 async def predict(file: UploadFile = File(...)):
-   
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Uploaded file is not an image.")
 
@@ -67,7 +80,6 @@ async def predict(file: UploadFile = File(...)):
     return result
 
 
-
 @app.get("/api/history")
 async def get_history():
     docs = []
@@ -82,7 +94,6 @@ async def get_history():
 async def clear_history():
     await history_collection.delete_many({})
     return {"message": "History cleared"}
-
 
 
 @app.post("/api/auth/register")

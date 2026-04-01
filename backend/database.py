@@ -1,6 +1,13 @@
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
 
-MONGO_URL = "mongodb+srv://rishiAdmin:AJQpP91BD6XA7Fcu@artifactlens.1p7bvqa.mongodb.net/artifactlens_db?appName=ArtifactLens"
+load_dotenv()
+
+MONGO_URL = os.getenv("MONGO_URL")
+
+if not MONGO_URL:
+    raise ValueError("MONGO_URL environment variable not set")
 
 client = AsyncIOMotorClient(MONGO_URL)
 db = client["artifactlens_db"]

@@ -7,7 +7,7 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-MODEL_PATH = "models/artifact_lens_final.h5"
+MODEL_PATH = "artifact_lens_final.h5"
 model = tf_keras.models.load_model(MODEL_PATH)
 
 
@@ -79,10 +79,10 @@ def analyze_image(image_bytes):
     print(f"Raw prediction: {prediction:.4f}")
 
     if prediction > 0.5:
-        label = "Fake"
+        label = "Real"
         confidence = round(float(prediction), 2)
     else:
-        label = "Real"
+        label = "Fake"
         confidence = round(float(1 - prediction), 2)
 
     print(f"Result: {label} ({confidence}) — completed in {round(time.time() - start, 2)}s")
