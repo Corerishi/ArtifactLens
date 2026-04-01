@@ -52,7 +52,7 @@ function Navbar() {
                     {token ? (
                         <div className="flex items-center gap-3 ml-3">
                             <span className="text-sm text-[#888888]">
-                                👋 <span className="text-[#E8E8E8] font-medium">{userName}</span>
+                                 <span className="text-[#E8E8E8] font-medium">{userName}</span>
                             </span>
                             <button
                                 onClick={handleLogout}
@@ -60,6 +60,7 @@ function Navbar() {
                                            text-[#888888] border border-[#2A2A2A]
                                            hover:text-[#F87171] hover:border-[#F87171]/30 hover:bg-[#2D1515]/40
                                            active:scale-[0.98] transition-all duration-200"
+                                    
                             >
                                 Logout
                             </button>

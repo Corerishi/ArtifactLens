@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback } from 'react'
 import axios from 'axios'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function Home() {
     const [selectedFile, setSelectedFile] = useState(null)
@@ -80,7 +80,7 @@ function Home() {
                 setError(msg)
             } else if (err.request) {
                 // No response received — backend is offline
-                setError('Cannot reach the server. Make sure the backend is running on localhost:8000.')
+                setError('Cannot reach the server. Please try again later.')
             } else {
                 setError('An unexpected error occurred. Please try again.')
             }
