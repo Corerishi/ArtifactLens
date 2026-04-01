@@ -195,5 +195,5 @@ npm run dev
 
 **Rishi Raj**
 - GitHub: [@Corerishi](https://github.com/Corerishi)
-- LinkedIn: [linkedin.com/in/your-profile](https://linkedin.com/in/rishiraj27)
+- LinkedIn: [linkedin.com/in/rishiraj27](https://linkedin.com/in/rishiraj27)
 - Live Project: [artifact-lens-six.vercel.app](https://artifact-lens-six.vercel.app)
